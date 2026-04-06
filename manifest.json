@@ -1,0 +1,9 @@
+{
+    "name": "Context Meter",
+    "version": "1.0.0",
+    "description": "Visualizes context token usage.",
+    "author": "Antigravity",
+    "main": "index.js",
+    "style": "style.css",
+    "source": "https://github.com/YourUsername/st-context-meter.git"
+}

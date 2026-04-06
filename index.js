@@ -4,6 +4,8 @@ import { getTokenCountAsync } from '../../tokenizers.js';
 let extensionContainer = null;
 let maxContextLimit = 4096; // fallback
 
+const STORAGE_KEY = 'st-context-meter-visible';
+
 // UI Elements
 let systemSegment, chatSegment, freeSegment, overageSegment;
 let totalLabel;
@@ -15,12 +17,32 @@ function formatNumber(num) {
     return num.toLocaleString();
 }
 
+/**
+ * Toggles the visibility of the meter and saves the state
+ */
+function toggleVisibility(force = null) {
+    const isVisible = force !== null ? force : extensionContainer.style.display === 'none';
+    extensionContainer.style.display = isVisible ? 'flex' : 'none';
+    localStorage.setItem(STORAGE_KEY, isVisible);
+    
+    const btn = document.getElementById('context-meter-btn');
+    if (btn) {
+        if (isVisible) btn.classList.add('active');
+        else btn.classList.remove('active');
+    }
+}
+
 function initUI() {
     if (document.getElementById('context-meter-container')) return;
 
     // Create container
     extensionContainer = document.createElement('div');
     extensionContainer.id = 'context-meter-container';
+    
+    // Check saved visibility state
+    const savedVisible = localStorage.getItem(STORAGE_KEY);
+    const isVisible = savedVisible === null ? true : savedVisible === 'true';
+    extensionContainer.style.display = isVisible ? 'flex' : 'none';
 
     // Build the inner HTML with a nice SVG icon
     extensionContainer.innerHTML = `
@@ -46,11 +68,25 @@ function initUI() {
     if (chatForm) {
         chatForm.parentNode.insertBefore(extensionContainer, chatForm);
     } else {
-        // Fallback to right menu tab
         const navPanel = document.getElementById('rm_api_block');
         if (navPanel) {
             navPanel.prepend(extensionContainer);
         }
+    }
+
+    // Add to Extensions Menu (Puzzle Piece)
+    const extensionsMenu = document.getElementById('extensionsMenu');
+    if (extensionsMenu) {
+        const btn = document.createElement('div');
+        btn.id = 'context-meter-btn';
+        btn.className = `list-group-item list-group-item-action clickable ${isVisible ? 'active' : ''}`;
+        btn.title = 'Toggle Context Meter';
+        btn.innerHTML = `
+            <i class="fa-solid fa-gauge-high"></i>
+            <span class="extension-name">Context Meter</span>
+        `;
+        btn.onclick = () => toggleVisibility();
+        extensionsMenu.appendChild(btn);
     }
 
     // Cache DOM refs
@@ -115,13 +151,11 @@ async function updateMeter(chatArray) {
         overageSegment.style.width = '0%';
     }
 
-    // Update tooltips with formatted numbers
     systemSegment.setAttribute('data-tooltip', `System/Lorebook: ${formatNumber(systemTokens)}T`);
     chatSegment.setAttribute('data-tooltip', `Chat History: ${formatNumber(chatTokens)}T`);
     freeSegment.setAttribute('data-tooltip', `Free Space: ${formatNumber(freeTokens)}T`);
     overageSegment.setAttribute('data-tooltip', `Overage: ${formatNumber(overageTokens)}T`);
 
-    // Update text with formatted numbers
     totalLabel.innerText = `${formatNumber(totalUsed)} / ${formatNumber(maxContextLimit)} Tokens`;
 }
 

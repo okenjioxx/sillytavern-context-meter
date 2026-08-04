@@ -1,5 +1,5 @@
-import { eventSource, event_types } from '../../events.js';
-import { getTokenCountAsync } from '../../tokenizers.js';
+import { eventSource, event_types } from '../../../events.js';
+import { getTokenCountAsync } from '../../../tokenizers.js';
 
 let extensionContainer = null;
 let maxContextLimit = 4096; // fallback
